@@ -1,0 +1,16 @@
+# Normalise line endings so Windows (CRLF) and Linux/macOS (LF) checkouts agree
+* text=auto
+
+# Scripts that must keep specific line endings
+*.sh     text eol=lf
+gradlew  text eol=lf
+mvnw     text eol=lf
+*.bat    text eol=crlf
+*.cmd    text eol=crlf
+
+# Binary files
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.ico  binary
+*.jar  binary

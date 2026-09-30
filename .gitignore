@@ -1,0 +1,26 @@
+# --- Backend (Java / Maven / IntelliJ) ---
+backend/target/
+*.class
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+# --- Frontend (Flutter / Dart) ---
+frontend/.dart_tool/
+frontend/.flutter-plugins
+frontend/.flutter-plugins-dependencies
+frontend/.packages
+frontend/build/
+frontend/**/generated_plugin_registrant.dart
+frontend/*.g.dart
+
+# --- Tooling ---
+.github/modernize/
+
+# --- General ---
+.env
+*.log
+.DS_Store
+Thumbs.db
