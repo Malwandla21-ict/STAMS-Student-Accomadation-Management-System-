@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Roofline mark, reversed (chalk bars) - sized to the adaptive icon safe zone. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group
+        android:translateX="29.74"
+        android:translateY="29.74"
+        android:scaleX="0.758"
+        android:scaleY="0.758">
+        <path android:fillColor="#7B6CFF" android:pathData="M4,29L32,6L60,29L54,36L32,18L10,36Z" />
+        <path android:fillColor="#F5F3EC" android:pathData="M18,38H46A4,4 0,0 1,46 46H18A4,4 0,0 1,18 38Z" />
+        <path android:fillColor="#F5F3EC" android:pathData="M18,51H46A4,4 0,0 1,46 59H18A4,4 0,0 1,18 51Z" />
+    </group>
+</vector>
