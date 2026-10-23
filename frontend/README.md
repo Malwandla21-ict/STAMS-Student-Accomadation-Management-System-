@@ -8,8 +8,10 @@ Material 3 app for landlords and students, built from the STAMS design handoff
 ```bash
 flutter pub get
 
-# Real backend (Spring Boot on :8081) from the Android emulator
+# Real backend (Spring Boot on :8081, start it first). The app finds it at
+# 10.0.2.2:8081 on the Android emulator and localhost:8081 in Chrome/desktop.
 flutter run
+flutter run -d chrome
 
 # No backend at all - every screen runs on seeded demo data
 flutter run --dart-define=STAMS_DEMO=true
@@ -37,22 +39,26 @@ status changes alert the student, so the whole nudge loop can be tried by switch
 
 ## What talks to the backend
 
-| Feature | Source |
+Outside demo mode everything comes from the Spring API, and every account only sees its own data:
+
+| Screen | Endpoint |
 | --- | --- |
-| Sign in / sign up / session (`/api/auth/*`, `/api/me`) | Spring API |
-| Properties, rooms, assign/remove students, student search | Spring API |
-| Issues, nudges, timeline, alerts, the student's own room | **Demo store** — no endpoints yet |
+| Sign in / sign up / session | `/api/auth/*`, `GET /api/me` |
+| Properties, rooms, assign/remove students, student search | `/api/properties`, `/api/rooms`, `/api/students/search` |
+| Issue inbox (landlord) / My issues (student) | `GET /api/issues` — the token decides which |
+| Issue detail + timeline | `GET /api/issues/{id}` |
+| Report an issue (photos first via `POST /api/uploads`) | `POST /api/issues` |
+| Update status / priority / note | `PATCH /api/issues/{id}` |
+| Nudge (once per 24h, open issues only) | `POST /api/issues/{id}/nudge` |
+| Room detail issues | `GET /api/rooms/{id}/issues` |
+| Alerts | `GET /api/notifications`, `POST /api/notifications/{id}/read`, `POST /api/notifications/read-all` |
+| Student's room + shared spaces | `GET /api/me/room` (204 until they're assigned) |
 
-Until those endpoints exist, API mode shows the demo issues as landlord Tom or student Aisha.
-Each one is behind an interface in `lib/data/repositories.dart` (`IssueRepository`,
-`NotificationRepository`, `StudentHomeRepository`); add an `Api…` implementation and switch
-the provider in `lib/providers/repositories.dart`. Endpoints the screens expect:
+## Progress & celebrations
 
-- `GET /api/issues` (landlord inbox), `GET /api/me/issues` (student), `GET /api/issues/{id}` with events
-- `POST /api/issues` (title, description, roomId, photos), `PATCH /api/issues/{id}` (status, priority, note)
-- `POST /api/issues/{id}/nudge` — 24h cooldown, open issues only
-- `GET /api/notifications`, `POST /api/notifications/{id}/read`, `POST /api/notifications/read-all`
-- `GET /api/me/room` — the student's room, roommates, landlord and the property's communal rooms
+- **Landlord setup checklist** on the dashboard (property → rooms → student → first report), hidden once done.
+- **Student tracker** "Reported → Seen → Fixing → Fixed" on cards and the issue page, plus a "getting set up" checklist while they wait for a room.
+- **Celebrations** (`lib/widgets/celebration.dart`) after adding a property or room, assigning a student, reporting, and resolving — each suggests the next step. Confetti is skipped when the device asks for reduced motion.
 
 ## Code map
 
@@ -62,7 +68,8 @@ lib/
   models/       User, Property, Room, Issue (+ events, filter), notifications — mirror the backend DTOs
   data/         Dio client, JWT storage, repository interfaces + API impls, demo/ in-memory store
   providers/    Riverpod: auth, repositories, lists, mutations (AppActions), report draft
-  widgets/      Design-system components: StatusChip, PriorityBadge, NudgePill, IssueCard,
+  widgets/      Design-system components: StatusChip, PriorityBadge, NudgePill, IssueCard, progress
+                (checklist, issue tracker), celebration,
                 RoomCard, NudgeButton, StatusTimeline, list states, StamsMark/Wordmark
   features/     auth/ (A1–A3), landlord/ (L1–L10), student/ (S1–S6), shared/ (alerts, profile, nav shell)
   router.dart   go_router with role-based redirects and a bottom-nav shell per role

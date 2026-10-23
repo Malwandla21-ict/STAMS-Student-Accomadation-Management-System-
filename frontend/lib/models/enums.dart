@@ -62,7 +62,7 @@ enum OccupancyMode {
   final String label;
 }
 
-enum NotificationType { nudge, statusChange, roomAssigned }
+enum NotificationType { newIssue, nudge, statusChange, roomAssigned }
 
 enum IssueEventType { reported, statusChanged, priorityChanged, noteAdded, nudged }
 

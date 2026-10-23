@@ -15,9 +15,11 @@ import '../../router.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_spacing.dart';
 import '../../widgets/buttons.dart';
+import '../../widgets/celebration.dart';
 import '../../widgets/common.dart';
 import '../../widgets/issue_badges.dart';
 import '../../widgets/list_states.dart';
+import '../../widgets/progress.dart';
 import '../auth/auth_widgets.dart';
 
 /// Header shared by both report steps: title, "Step n of 2", progress bars.
@@ -384,7 +386,7 @@ class _PickTile extends StatelessWidget {
       );
 }
 
-/// S4 - submitted. The landlord has been notified.
+/// S4 - submitted. A small celebration, where the report is in the process, and what happens next.
 class ReportDoneScreen extends ConsumerWidget {
   const ReportDoneScreen({super.key, required this.issueId});
 
@@ -403,73 +405,61 @@ class ReportDoneScreen extends ConsumerWidget {
         if (!didPop) context.go(Routes.student);
       },
       child: Scaffold(
-        body: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 28),
-              child: Column(children: [
-                Container(
-                  width: 112,
-                  height: 112,
-                  decoration: const BoxDecoration(color: AppColors.tertiaryContainer, shape: BoxShape.circle),
-                  alignment: Alignment.center,
-                  child: Container(
-                    width: 76,
-                    height: 76,
-                    decoration: const BoxDecoration(color: AppColors.tertiary, shape: BoxShape.circle),
-                    child: const Icon(Symbols.check_rounded, size: 44, color: Colors.white),
+        body: Stack(children: [
+          SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 28),
+                child: Column(children: [
+                  Container(
+                    width: 96,
+                    height: 96,
+                    alignment: Alignment.center,
+                    decoration: const BoxDecoration(color: AppColors.softIris, shape: BoxShape.circle),
+                    child: const Text('🙌', style: TextStyle(fontSize: 44)),
                   ),
-                ),
-                const SizedBox(height: 24),
-                Text('Issue reported', style: t.headlineMedium),
-                const SizedBox(height: 16),
-                Text(
-                  '$landlord has been notified. You’ll get an alert each time the status changes.',
-                  textAlign: TextAlign.center,
-                  style: t.bodyLarge!.copyWith(color: AppColors.onSurfaceVariant),
-                ),
-                if (issue != null) ...[
-                  const SizedBox(height: 24),
-                  OutlinedCard(
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        Text(issue.title, style: t.titleMedium),
-                        const SizedBox(height: 10),
-                        Row(children: [
-                          StatusChip(issue.status),
-                          const SizedBox(width: 8),
-                          Text('${issue.roomName} · just now', style: const TextStyle(fontSize: 13, color: AppColors.onSurfaceVariant)),
+                  const SizedBox(height: 20),
+                  Text('Thanks — it’s reported', style: t.headlineMedium, textAlign: TextAlign.center),
+                  const SizedBox(height: 12),
+                  Text(
+                    '$first has been told. We’ll let you know each time there’s an update.',
+                    textAlign: TextAlign.center,
+                    style: t.bodyLarge!.copyWith(color: AppColors.onSurfaceVariant),
+                  ),
+                  if (issue != null) ...[
+                    const SizedBox(height: 24),
+                    OutlinedCard(
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                          Text(issue.title, style: t.titleMedium),
+                          const SizedBox(height: 2),
+                          Text('${issue.roomName} · just now', style: t.bodySmall!.copyWith(color: AppColors.onSurfaceVariant)),
+                          const SizedBox(height: 14),
+                          IssueProgress(status: issue.status, landlordFirstName: first),
                         ]),
-                      ]),
+                      ),
                     ),
-                  ),
-                ],
-                const SizedBox(height: 16),
-                Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  const Icon(Symbols.notifications_active_rounded, size: 20, color: AppColors.tertiary, fill: 1),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text.rich(
-                      TextSpan(children: [
-                        const TextSpan(text: 'No progress? You can '),
-                        TextSpan(text: 'nudge $first', style: const TextStyle(fontWeight: FontWeight.w700, color: AppColors.onTertiaryContainer)),
-                        const TextSpan(text: ' from the issue page once a day.'),
-                      ]),
-                      style: const TextStyle(fontSize: 13, height: 18 / 13, color: AppColors.onSurfaceVariant),
-                    ),
+                  ],
+                  const SizedBox(height: 16),
+                  Text(
+                    'No movement after a day? You can give $first a friendly nudge from the issue page.',
+                    textAlign: TextAlign.center,
+                    style: t.bodySmall!.copyWith(color: AppColors.onSurfaceVariant),
                   ),
                 ]),
-              ]),
+              ),
             ),
           ),
-        ),
+          const Positioned.fill(child: ConfettiBurst(originY: .3)),
+        ]),
         bottomNavigationBar: SafeArea(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
             child: Column(mainAxisSize: MainAxisSize.min, children: [
               BigButton(
-                label: 'View issue',
+                label: 'Follow this issue',
+                variant: BigButtonVariant.soft,
                 onPressed: () {
                   context.go(Routes.student);
                   context.push(Routes.studentIssue(issueId));

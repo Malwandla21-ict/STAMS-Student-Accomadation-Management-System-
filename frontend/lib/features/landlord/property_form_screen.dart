@@ -9,6 +9,7 @@ import '../../providers/data.dart';
 import '../../router.dart';
 import '../../utils/format.dart';
 import '../../widgets/buttons.dart';
+import '../../widgets/celebration.dart';
 import '../../widgets/common.dart';
 import '../../widgets/list_states.dart';
 import '../auth/auth_widgets.dart';
@@ -104,7 +105,18 @@ class _PropertyFormState extends ConsumerState<_PropertyForm> {
         context.pop();
         showMessage(context, 'Property saved');
       } else {
+        // This screen closes, so celebrate on the root navigator and route the next step through the router.
+        final root = Navigator.of(context, rootNavigator: true);
+        final router = GoRouter.of(context);
         context.pushReplacement(Routes.property(saved.id));
+        celebrate(
+          root.context,
+          emoji: '🏠',
+          title: '${saved.name} is set up!',
+          message: 'Next, add its rooms — bedrooms first, then shared spaces like the kitchen.',
+          nextLabel: 'Add a room',
+          onNext: () => router.push(Routes.newRoom(saved.id)),
+        );
       }
     } on ApiException catch (e) {
       if (mounted) {

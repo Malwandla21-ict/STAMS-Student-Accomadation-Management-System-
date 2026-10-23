@@ -5,6 +5,7 @@ import 'package:material_symbols_icons/symbols.dart';
 
 import '../../models/enums.dart';
 import '../../models/issue.dart';
+import '../../models/property.dart';
 import '../../providers/auth.dart';
 import '../../providers/data.dart';
 import '../../router.dart';
@@ -14,8 +15,10 @@ import '../../utils/format.dart';
 import '../../widgets/cards.dart';
 import '../../widgets/common.dart';
 import '../../widgets/list_states.dart';
+import '../../widgets/progress.dart';
 
-/// L1 - open issues by status, most nudged, recent activity.
+/// L1 - a calm overview: setup checklist for new landlords, open issues by
+/// status, what needs attention, recent reports.
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
 
@@ -23,6 +26,7 @@ class DashboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider);
     final issues = ref.watch(landlordIssuesProvider);
+    final properties = ref.watch(propertiesProvider);
     final unread = ref.watch(unreadAlertCountProvider);
     final t = Theme.of(context).textTheme;
 
@@ -36,47 +40,43 @@ class DashboardScreen extends ConsumerWidget {
       child: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(notificationsProvider);
+          ref.invalidate(propertiesProvider);
           return ref.refresh(landlordIssuesProvider.future);
         },
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
           children: [
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(Fmt.today(), style: t.bodyMedium!.copyWith(color: AppColors.onSurfaceVariant)),
-                      const SizedBox(height: 4),
-                      Text('${Fmt.greeting()}, ${user?.firstName ?? ''}', style: t.headlineMedium),
-                    ],
-                  ),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text(Fmt.longToday(), style: t.bodyMedium!.copyWith(color: AppColors.onSurfaceVariant)),
+                    const SizedBox(height: 4),
+                    Text('${Fmt.greeting()}, ${user?.firstName ?? ''} 👋', style: t.headlineMedium),
+                  ]),
                 ),
-                Transform.translate(
-                  offset: const Offset(4, 0),
-                  child: IconButton(
-                    tooltip: unread > 0 ? 'Alerts, $unread unread' : 'Alerts',
-                    style: IconButton.styleFrom(backgroundColor: AppColors.surfaceContainer, fixedSize: const Size(48, 48)),
-                    onPressed: () => context.go(Routes.landlordAlerts),
-                    icon: Badge(
-                      isLabelVisible: unread > 0,
-                      label: Text('$unread'),
-                      offset: const Offset(6, -6),
-                      child: const Icon(Symbols.notifications_rounded),
-                    ),
+                IconButton(
+                  tooltip: unread > 0 ? 'Alerts, $unread new' : 'Alerts',
+                  onPressed: () => context.go(Routes.landlordAlerts),
+                  icon: Badge(
+                    isLabelVisible: unread > 0,
+                    smallSize: 8,
+                    backgroundColor: AppColors.tertiary,
+                    child: const Icon(Symbols.notifications_rounded, color: AppColors.onSurfaceVariant),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
+            if (properties.hasValue && issues.hasValue)
+              _SetupChecklist(properties: properties.requireValue, issues: issues.requireValue),
             AsyncBody(
               value: issues,
               onRetry: () => ref.invalidate(landlordIssuesProvider),
               errorTitle: 'Couldn’t load issues',
               loading: const SizedBox(height: 480, child: SkeletonList(padding: EdgeInsets.zero)),
-              data: (all) => _DashboardBody(issues: all, onOpenIssues: openIssues),
+              data: (all) => _Overview(issues: all, onOpenIssues: openIssues),
             ),
           ],
         ),
@@ -85,8 +85,63 @@ class DashboardScreen extends ConsumerWidget {
   }
 }
 
-class _DashboardBody extends StatelessWidget {
-  const _DashboardBody({required this.issues, required this.onOpenIssues});
+/// New landlords: property → room → student → first report. Hidden once everything's done.
+class _SetupChecklist extends StatelessWidget {
+  const _SetupChecklist({required this.properties, required this.issues});
+
+  final List<Property> properties;
+  final List<Issue> issues;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasProperty = properties.isNotEmpty;
+    final hasRoom = properties.any((p) => p.roomCount > 0);
+    final hasStudent = properties.any((p) => p.bedsFilled > 0);
+    final hasReport = issues.isNotEmpty;
+    if (hasProperty && hasRoom && hasStudent && hasReport) return const SizedBox.shrink();
+
+    final needsRoom = properties.where((p) => p.roomCount == 0).firstOrNull ?? properties.firstOrNull;
+    final hasFreeBed = properties.where((p) => p.bedsTotal > p.bedsFilled).firstOrNull ?? properties.firstOrNull;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 24),
+      child: ChecklistCard(
+        title: 'Get set up',
+        subtitle: 'A few quick steps and your students can start reporting.',
+        steps: [
+          ChecklistStep(
+            label: 'Add your first property',
+            done: hasProperty,
+            hint: 'Just a name and address.',
+            actionLabel: 'Add',
+            onAction: () => context.push(Routes.newProperty),
+          ),
+          ChecklistStep(
+            label: 'Add its rooms',
+            done: hasRoom,
+            hint: 'Bedrooms, plus shared spaces like the kitchen.',
+            actionLabel: 'Add room',
+            onAction: needsRoom == null ? null : () => context.push(Routes.newRoom(needsRoom.id)),
+          ),
+          ChecklistStep(
+            label: 'Assign a student',
+            done: hasStudent,
+            hint: 'Open a room and search their email.',
+            actionLabel: 'Open',
+            onAction: hasFreeBed == null ? null : () => context.push(Routes.property(hasFreeBed.id)),
+          ),
+          ChecklistStep(
+            label: 'Get your first report',
+            done: hasReport,
+            hint: 'Students report from their app once they’re in a room.',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Overview extends StatelessWidget {
+  const _Overview({required this.issues, required this.onOpenIssues});
 
   final List<Issue> issues;
   final void Function({IssueStatus? status, IssueSort sort}) onOpenIssues;
@@ -98,7 +153,7 @@ class _DashboardBody extends StatelessWidget {
     final open = issues.where((i) => i.isOpen).toList();
     final resolvedThisMonth =
         issues.where((i) => i.resolvedAt != null && i.resolvedAt!.year == now.year && i.resolvedAt!.month == now.month).length;
-    final mostNudged = const IssueFilter().apply(open.where((i) => i.nudgeCount > 0)).take(2).toList();
+    final attention = const IssueFilter().apply(open.where((i) => i.nudgeCount > 0)).take(2).toList();
     final recent = [
       for (final i in issues)
         for (final e in i.events)
@@ -112,41 +167,58 @@ class _DashboardBody extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.baseline,
           textBaseline: TextBaseline.alphabetic,
           children: [
-            Expanded(child: Text(Fmt.plural(open.length, 'open issue'), style: t.titleMedium)),
-            Text('$resolvedThisMonth resolved this month', style: t.bodyMedium!.copyWith(fontSize: 13, color: AppColors.onSurfaceVariant)),
+            Expanded(child: Text(open.isEmpty ? 'No open issues' : Fmt.plural(open.length, 'open issue'), style: t.titleMedium)),
+            if (resolvedThisMonth > 0)
+              Text('✓ $resolvedThisMonth fixed this month',
+                  style: t.bodyMedium!.copyWith(fontSize: 13, color: AppColors.onSurfaceVariant)),
           ],
         ),
         const SizedBox(height: 12),
-        Row(
-          children: [
-            for (final status in IssueStatus.open) ...[
-              if (status != IssueStatus.reported) const SizedBox(width: 10),
+        if (open.isEmpty)
+          OutlinedCard(
+            child: Row(children: [
+              const Text('✨', style: TextStyle(fontSize: 24)),
+              const SizedBox(width: 12),
               Expanded(
-                child: _StatusTile(
-                  status: status,
-                  count: open.where((i) => i.status == status).length,
-                  onTap: () => onOpenIssues(status: status),
+                child: Text(
+                  issues.isEmpty ? 'Nothing reported yet. When students report something, it lands here.' : 'All caught up — nothing needs fixing right now.',
+                  style: t.bodyMedium!.copyWith(color: AppColors.onSurfaceVariant),
                 ),
               ),
+            ]),
+          )
+        else
+          Row(
+            children: [
+              for (final status in IssueStatus.open) ...[
+                if (status != IssueStatus.reported) const SizedBox(width: 10),
+                Expanded(
+                  child: _StatusTile(
+                    status: status,
+                    count: open.where((i) => i.status == status).length,
+                    onTap: () => onOpenIssues(status: status),
+                  ),
+                ),
+              ],
             ],
-          ],
-        ),
-        if (mostNudged.isNotEmpty) ...[
-          const SizedBox(height: 24),
+          ),
+        if (attention.isNotEmpty) ...[
+          const SizedBox(height: 28),
           SectionHeader(
-            title: 'Most nudged',
-            icon: Symbols.notifications_active_rounded,
+            title: 'Needs attention',
+            size: 18,
             trailing: InlineAction('See all', onPressed: () => onOpenIssues()),
           ),
-          const SizedBox(height: 4),
-          for (final issue in mostNudged) ...[
+          Text('Students have nudged you about these.', style: t.bodySmall!.copyWith(color: AppColors.onSurfaceVariant)),
+          const SizedBox(height: 12),
+          for (final issue in attention) ...[
             IssueCard(issue: issue, onTap: () => context.push(Routes.landlordIssue(issue.id))),
             const SizedBox(height: 12),
           ],
         ],
         if (recent.isNotEmpty) ...[
-          SizedBox(height: mostNudged.isEmpty ? 24 : 12),
-          Text('Recent activity', style: t.titleMedium!.copyWith(fontSize: 20, fontWeight: FontWeight.w700)),
+          SizedBox(height: attention.isEmpty ? 28 : 16),
+          Text('Recently reported', style: t.titleMedium!.copyWith(fontSize: 18)),
           const SizedBox(height: 8),
           for (final r in recent.take(4))
             InkWell(
@@ -158,10 +230,10 @@ class _DashboardBody extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     IconCircle(
-                      context.statusColors.reported.icon,
+                      context.statusColors.of(r.issue.status).icon,
                       size: 36,
-                      background: context.statusColors.reported.container,
-                      foreground: context.statusColors.reported.onContainer,
+                      background: context.statusColors.of(r.issue.status).container,
+                      foreground: context.statusColors.of(r.issue.status).onContainer,
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -170,7 +242,7 @@ class _DashboardBody extends StatelessWidget {
                         children: [
                           Text.rich(
                             TextSpan(children: [
-                              TextSpan(text: r.issue.reporterName, style: const TextStyle(fontWeight: FontWeight.w700)),
+                              TextSpan(text: r.issue.reporterName, style: const TextStyle(fontWeight: FontWeight.w600)),
                               TextSpan(text: ' reported “${r.issue.title}”'),
                             ]),
                             style: t.bodyMedium,
@@ -207,15 +279,20 @@ class _StatusTile extends StatelessWidget {
       excludeSemantics: true,
       child: OutlinedCard(
         onTap: onTap,
-        padding: const EdgeInsets.fromLTRB(12, 14, 12, 14),
+        padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            IconCircle(s.icon, size: 32, background: s.container, foreground: s.onContainer),
-            const SizedBox(height: 8),
-            Text('$count', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 28, height: 32 / 28)),
-            const SizedBox(height: 8),
-            Text(status.label, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+            Row(children: [
+              Icon(s.icon, size: 18, color: s.onContainer, fill: 1),
+              const Spacer(),
+              Text('$count', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 22, height: 1)),
+            ]),
+            const SizedBox(height: 10),
+            Text(status.label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.onSurfaceVariant)),
           ],
         ),
       ),

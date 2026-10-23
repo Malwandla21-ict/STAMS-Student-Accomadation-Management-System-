@@ -15,6 +15,7 @@ import '../../theme/app_spacing.dart';
 import '../../theme/semantic_colors.dart';
 import '../../utils/format.dart';
 import '../../widgets/buttons.dart';
+import '../../widgets/celebration.dart';
 import '../../widgets/common.dart';
 import '../../widgets/issue_badges.dart';
 import '../../widgets/list_states.dart';
@@ -54,9 +55,22 @@ class _IssueDetailScreenState extends ConsumerState<IssueDetailScreen> {
     final saved = await showUpdateIssueSheet(context, issue, preselect: preselect);
     if (saved == null || !mounted) return;
     final student = issue.reporterName.split(' ').first;
+    if (saved.status == IssueStatus.resolved && issue.status != IssueStatus.resolved) {
+      final now = DateTime.now();
+      final all = await ref.read(landlordIssuesProvider.future);
+      final fixed = all.where((i) => i.resolvedAt != null && i.resolvedAt!.year == now.year && i.resolvedAt!.month == now.month).length;
+      if (!mounted) return;
+      celebrate(
+        context,
+        emoji: '✅',
+        title: 'Fixed!',
+        message: '$student has been told it’s sorted.${fixed > 1 ? ' That’s $fixed issues fixed this month — nice work.' : ''}',
+      );
+      return;
+    }
     showMessage(
       context,
-      saved.status != issue.status ? '$student has been notified' : 'Issue updated',
+      saved.status != issue.status ? '$student has been told' : 'Issue updated',
       icon: Symbols.check_circle_rounded,
     );
   }
@@ -165,7 +179,7 @@ class _NudgeBanner extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(color: AppColors.tertiaryContainer, borderRadius: BorderRadius.circular(AppRadius.large)),
         child: Row(children: [
-          const IconCircle(Symbols.notifications_active_rounded, background: AppColors.tertiary, foreground: Colors.white),
+          const IconCircle(Symbols.notifications_active_rounded, background: Colors.white, foreground: AppColors.tertiary),
           const SizedBox(width: 12),
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [

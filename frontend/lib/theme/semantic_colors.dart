@@ -80,7 +80,9 @@ class PriorityColors extends ThemeExtension<PriorityColors> {
         container: Color(0xFFFFFFFF), onContainer: Color(0xFF3E4A56), border: Color(0xFFC4CAD0), icon: Symbols.signal_cellular_alt_1_bar_rounded),
     medium: SemanticStyle(
         container: Color(0xFFFFF1E3), onContainer: Color(0xFF7F3D00), border: Color(0xFFEDC39B), icon: Symbols.signal_cellular_alt_2_bar_rounded),
-    high: SemanticStyle(container: Color(0xFFB3261E), onContainer: Color(0xFFFFFFFF), icon: Symbols.signal_cellular_alt_rounded),
+    // Tonal rather than solid red, so a list of high-priority issues doesn't shout.
+    high: SemanticStyle(
+        container: Color(0xFFFCE8E6), onContainer: Color(0xFFA3241B), border: Color(0xFFF4C7C2), icon: Symbols.signal_cellular_alt_rounded),
   );
 
   SemanticStyle of(IssuePriority priority) => switch (priority) {

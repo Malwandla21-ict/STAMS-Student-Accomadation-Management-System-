@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import '../config.dart';
 import 'enums.dart';
 
 const nudgeCooldown = Duration(hours: 24);
@@ -69,6 +70,31 @@ class Issue {
   /// Timeline, oldest first (same order as the backend).
   final List<IssueEvent> events;
 
+  factory Issue.fromJson(Map<String, dynamic> json) {
+    DateTime? time(String key) => json[key] == null ? null : DateTime.parse(json[key] as String).toLocal();
+    return Issue(
+      id: (json['id'] as num).toInt(),
+      title: json['title'] as String,
+      description: json['description'] as String? ?? '',
+      status: enumFromJson(IssueStatus.values, json['status']),
+      priority: enumFromJson(IssuePriority.values, json['priority']),
+      roomId: (json['roomId'] as num).toInt(),
+      roomName: json['roomName'] as String,
+      roomType: enumFromJson(RoomType.values, json['roomType']),
+      propertyId: (json['propertyId'] as num).toInt(),
+      propertyName: json['propertyName'] as String,
+      reporterId: (json['reporterId'] as num).toInt(),
+      reporterName: json['reporterName'] as String,
+      landlordName: json['landlordName'] as String,
+      createdAt: time('createdAt')!,
+      photos: (json['photoUrls'] as List? ?? const []).map((u) => IssuePhoto.url(absoluteApiUrl(u as String))).toList(),
+      nudgeCount: (json['nudgeCount'] as num? ?? 0).toInt(),
+      lastNudgedAt: time('lastNudgedAt'),
+      resolvedAt: time('resolvedAt'),
+      events: (json['events'] as List? ?? const []).map((e) => IssueEvent.fromJson(e as Map<String, dynamic>)).toList(),
+    );
+  }
+
   bool get isOpen => status.isOpen;
   String get location => '$roomName · $propertyName';
 
@@ -134,6 +160,18 @@ class IssueEvent {
   final IssuePriority? priority;
   final String? note;
   final int? nudgeNumber;
+
+  factory IssueEvent.fromJson(Map<String, dynamic> json) => IssueEvent(
+        id: (json['id'] as num).toInt(),
+        type: enumFromJson(IssueEventType.values, json['type']),
+        actorId: (json['actorId'] as num).toInt(),
+        actorName: json['actorName'] as String,
+        createdAt: DateTime.parse(json['createdAt'] as String).toLocal(),
+        status: json['status'] == null ? null : enumFromJson(IssueStatus.values, json['status']),
+        priority: json['priority'] == null ? null : enumFromJson(IssuePriority.values, json['priority']),
+        note: json['note'] as String?,
+        nudgeNumber: (json['nudgeNumber'] as num?)?.toInt(),
+      );
 }
 
 /// What the student submits from S2/S3.

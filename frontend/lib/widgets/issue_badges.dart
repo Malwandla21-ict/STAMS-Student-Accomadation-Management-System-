@@ -61,8 +61,8 @@ class PriorityBadge extends StatelessWidget {
   }
 }
 
-/// Nudge count pill: tonal for 1-2 nudges, solid tertiary at 3+ so repeat
-/// reminders stand out in long lists. Renders nothing for 0.
+/// Nudge count pill. Always tonal so lists stay calm; 3+ nudges get a thin iris
+/// outline so repeat reminders still stand out. Renders nothing for 0.
 class NudgePill extends StatelessWidget {
   const NudgePill(this.count, {super.key, this.label});
 
@@ -75,17 +75,22 @@ class NudgePill extends StatelessWidget {
   Widget build(BuildContext context) {
     if (count <= 0) return const SizedBox.shrink();
     final hot = count >= 3;
-    final fg = hot ? Colors.white : AppColors.onTertiaryContainer;
+    const fg = AppColors.onTertiaryContainer;
     return Container(
       height: 28,
       padding: const EdgeInsets.fromLTRB(8, 0, 10, 0),
-      decoration: BoxDecoration(color: hot ? AppColors.tertiary : AppColors.tertiaryContainer, borderRadius: BorderRadius.circular(999)),
+      decoration: BoxDecoration(
+        color: AppColors.tertiaryContainer,
+        borderRadius: BorderRadius.circular(999),
+        border: hot ? Border.all(color: AppColors.tertiary.withValues(alpha: .45)) : null,
+      ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Symbols.notifications_active_rounded, size: 16, color: fg, fill: 1),
+          const Icon(Symbols.notifications_active_rounded, size: 16, color: fg, fill: 1),
           const SizedBox(width: 4),
-          Text(label ?? Fmt.plural(count, 'nudge'), style: TextStyle(fontSize: 12, height: 16 / 12, fontWeight: FontWeight.w700, color: fg)),
+          Text(label ?? Fmt.plural(count, 'nudge'),
+              style: TextStyle(fontSize: 12, height: 16 / 12, fontWeight: hot ? FontWeight.w700 : FontWeight.w600, color: fg)),
         ],
       ),
     );

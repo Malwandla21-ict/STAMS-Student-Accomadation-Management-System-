@@ -74,7 +74,7 @@ final roomProvider = FutureProvider.autoDispose.family<Room, int>(
 );
 
 final studentSearchProvider = FutureProvider.autoDispose.family<List<StudentSearchResult>, String>((ref, query) async {
-  if (query.trim().length < 2) return const [];
+  if (query.trim().length < 3) return const [];
   // Debounce: wait for typing to pause, and bail out if the query changed meanwhile.
   var cancelled = false;
   ref.onDispose(() => cancelled = true);

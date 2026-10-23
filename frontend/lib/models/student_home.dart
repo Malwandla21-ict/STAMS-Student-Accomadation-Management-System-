@@ -19,4 +19,16 @@ class StudentHome {
   final List<Room> sharedSpaces;
 
   String get landlordFirstName => landlordName.split(' ').first;
+
+  factory StudentHome.fromJson(Map<String, dynamic> json) => StudentHome(
+        room: Room.fromJson(json['room'] as Map<String, dynamic>),
+        propertyName: json['propertyName'] as String,
+        landlordName: json['landlordName'] as String,
+        roommates: (json['roommates'] as List? ?? const [])
+            .map((s) => StudentSummary.fromJson(s as Map<String, dynamic>))
+            .toList(),
+        sharedSpaces: (json['sharedSpaces'] as List? ?? const [])
+            .map((r) => Room.fromJson(r as Map<String, dynamic>))
+            .toList(),
+      );
 }

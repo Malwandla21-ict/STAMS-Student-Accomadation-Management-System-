@@ -51,9 +51,10 @@ abstract final class AppTheme {
   /// Archivo, sizes from the design system (size / line height / weight).
   static TextTheme get textTheme => TextTheme(
         displaySmall: _archivo(36, 44, FontWeight.w800),
-        headlineMedium: _archivo(28, 36, FontWeight.w700),
-        headlineSmall: _archivo(24, 32, FontWeight.w700),
-        titleLarge: _archivo(22, 28, FontWeight.w600),
+        // Page titles. A notch smaller and lighter than the original 28/700 so screens feel calmer.
+        headlineMedium: _archivo(24, 32, FontWeight.w600),
+        headlineSmall: _archivo(22, 28, FontWeight.w600),
+        titleLarge: _archivo(20, 26, FontWeight.w600),
         titleMedium: _archivo(16, 22, FontWeight.w600),
         titleSmall: _archivo(14, 20, FontWeight.w600),
         bodyLarge: _archivo(16, 24, FontWeight.w400),

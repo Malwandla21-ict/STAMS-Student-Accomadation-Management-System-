@@ -9,6 +9,7 @@ import '../utils/format.dart';
 import 'common.dart';
 import 'issue_badges.dart';
 import 'photos.dart';
+import 'progress.dart';
 
 /// Issue list card: thumbnail, title, location, status/priority, nudge pill,
 /// and a footer with reporter, age and last nudge.
@@ -73,15 +74,19 @@ class IssueCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 12),
-            Row(
-              children: [
-                StatusChip(issue.status),
-                const SizedBox(width: 8),
-                PriorityBadge(issue.priority),
-                const Spacer(),
-                NudgePill(issue.nudgeCount),
-              ],
-            ),
+            // Students get a friendly "Reported → Seen → Fixing → Fixed" tracker; landlords get the work chips.
+            if (reporterIsMe)
+              IssueProgress(status: issue.status, landlordFirstName: issue.landlordName.split(' ').first, compact: true)
+            else
+              Row(
+                children: [
+                  StatusChip(issue.status),
+                  const SizedBox(width: 8),
+                  PriorityBadge(issue.priority),
+                  const Spacer(),
+                  NudgePill(issue.nudgeCount),
+                ],
+              ),
             const SizedBox(height: 12),
             const Divider(color: AppColors.surfaceContainer),
             const SizedBox(height: 10),
@@ -94,7 +99,7 @@ class IssueCard extends StatelessWidget {
                 if (issue.nudgeCount > 0 && issue.lastNudgedAt != null) ...[
                   const SizedBox(width: 8),
                   Text('Last nudged ${Fmt.ago(issue.lastNudgedAt!)}',
-                      style: footer.copyWith(color: AppColors.nudgeText, fontWeight: FontWeight.w600)),
+                      style: footer.copyWith(color: AppColors.nudgeText)),
                 ],
               ],
             ),

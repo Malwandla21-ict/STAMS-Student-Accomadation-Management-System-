@@ -11,6 +11,7 @@ import '../../router.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_spacing.dart';
 import '../../widgets/buttons.dart';
+import '../../widgets/celebration.dart';
 import '../../widgets/common.dart';
 import '../../widgets/issue_badges.dart';
 import '../../widgets/list_states.dart';
@@ -99,8 +100,29 @@ class _RoomFormState extends ConsumerState<_RoomForm> {
             input: RoomInput(name: _name.text.trim(), type: _type, occupancyMode: _mode, capacity: _capacity),
           );
       if (!mounted) return;
+      if (_editing) {
+        context.pop();
+        showMessage(context, 'Room saved');
+        return;
+      }
+      final root = Navigator.of(context, rootNavigator: true);
+      final router = GoRouter.of(context);
       context.pop();
-      showMessage(context, _editing ? 'Room saved' : '${saved.name} added');
+      celebrate(
+        root.context,
+        emoji: switch (saved.type) {
+          RoomType.bedroom => '🛏️',
+          RoomType.kitchen => '🍳',
+          RoomType.bathroom => '🛁',
+          RoomType.commonArea => '🛋️',
+        },
+        title: '${saved.name} added!',
+        message: saved.isCommunal
+            ? 'Everyone living at ${widget.propertyName} can report issues here.'
+            : 'Next, put a student in it so they can report issues.',
+        nextLabel: saved.isCommunal ? null : 'Assign a student',
+        onNext: saved.isCommunal ? null : () => router.push(Routes.assignStudent(saved.id)),
+      );
     } on ApiException catch (e) {
       if (mounted) setState(() => _error = e.fieldErrors.values.firstOrNull ?? e.message);
     } finally {
