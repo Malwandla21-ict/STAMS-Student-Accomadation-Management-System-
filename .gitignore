@@ -1,5 +1,7 @@
 # --- Backend (Java / Maven / IntelliJ) ---
 backend/target/
+# Issue photos uploaded while developing
+backend/uploads/
 *.class
 .idea/
 *.iml

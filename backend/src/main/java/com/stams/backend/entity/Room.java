@@ -4,7 +4,9 @@ import com.stams.backend.entity.enums.OccupancyMode;
 import com.stams.backend.entity.enums.RoomType;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,40 +18,50 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@ToString(exclude = {"property", "students", "issues"})
+@ToString(onlyExplicitlyIncluded = true)
 public class Room {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @EqualsAndHashCode.Include
+    @ToString.Include
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "property_id", nullable = false)
     private Property property;
 
-    @Column(nullable = false)
-    private String roomNumber;
+    /** "Room 2", "Bathroom A", "Kitchen"... */
+    @Column(nullable = false, length = 60)
+    @ToString.Include
+    private String name;
 
-    // BEDROOM, KITCHEN, BATHROOM, COMMON_AREA - what kind of space this is.
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 20)
     private RoomType type;
 
-    // SINGLE, SHARED, COMMUNAL - how many students can occupy it, rather than
-    // assuming one student per room.
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 20)
     private OccupancyMode occupancyMode;
 
-    // How many students this room can hold at once (relevant for SHARED/COMMUNAL).
+    /** Number of beds. 1 for SINGLE, 2+ for SHARED, null for COMMUNAL. */
     private Integer capacity;
 
+    @CreationTimestamp
+    @Column(nullable = false, updatable = false)
+    private Instant createdAt;
+
+    /** Students living in this room (users whose room points here). */
     @Builder.Default
     @OneToMany(mappedBy = "room")
-    private List<Student> students = new ArrayList<>();
+    @OrderBy("name ASC")
+    private List<User> residents = new ArrayList<>();
 
     @Builder.Default
     @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Issue> issues = new ArrayList<>();
+
+    public boolean isCommunal() {
+        return occupancyMode == OccupancyMode.COMMUNAL;
+    }
 }
