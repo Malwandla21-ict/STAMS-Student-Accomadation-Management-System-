@@ -13,10 +13,10 @@ import '../../theme/semantic_colors.dart';
 import '../../utils/format.dart';
 import '../../widgets/buttons.dart';
 import '../../widgets/common.dart';
-import '../../widgets/issue_badges.dart';
 import '../../widgets/list_states.dart';
 import '../../widgets/nudge_button.dart';
 import '../../widgets/photos.dart';
+import '../../widgets/progress.dart';
 import '../../widgets/status_timeline.dart';
 
 /// S6a-d - the student's view of one issue: progress timeline and the nudge button.
@@ -45,23 +45,16 @@ class StudentIssueScreen extends ConsumerWidget {
             else if (issue.photos.isNotEmpty)
               PhotoCarousel(photos: issue.photos, height: 128),
             if (!issue.isOpen || issue.photos.isNotEmpty) const SizedBox(height: 14),
-            Text(issue.title, style: t.titleLarge!.copyWith(fontSize: 20, height: 26 / 20)),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                StatusChip(issue.status),
-                PriorityBadge(issue.priority),
-                Text(issue.roomName, style: const TextStyle(fontSize: 13, color: AppColors.onSurfaceVariant)),
-              ],
-            ),
-            const SizedBox(height: 14),
+            Text(issue.title, style: t.titleLarge),
+            const SizedBox(height: 4),
+            Text('${issue.roomName} · ${issue.propertyName}', style: t.bodySmall!.copyWith(color: AppColors.onSurfaceVariant)),
+            const SizedBox(height: 16),
+            IssueProgress(status: issue.status, landlordFirstName: issue.landlordName.split(' ').first),
+            const SizedBox(height: 20),
             OutlinedCard(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
               child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                const Text('Progress', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+                Text('What’s happened', style: t.titleSmall),
                 const SizedBox(height: 12),
                 StatusTimeline(issue: issue, viewer: Role.student, compact: true),
               ]),
@@ -70,7 +63,7 @@ class StudentIssueScreen extends ConsumerWidget {
             _Description(text: issue.description),
             if (!issue.isOpen) ...[
               const SizedBox(height: 14),
-              const InfoNote('Nudging is closed for resolved issues. Problem back? Report it again.', background: null),
+              const InfoNote('This one’s closed, so nudging is off. If the problem comes back, just report it again.', background: null),
             ],
           ],
         ),

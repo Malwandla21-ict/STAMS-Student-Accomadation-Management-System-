@@ -65,11 +65,14 @@ class _BadgedIcon extends StatelessWidget {
   final int badge;
   final bool filled;
 
+  // A small iris dot rather than a red number: it says "something new" without nagging.
+  // The count is still in the destination's tooltip / screen-reader label.
   @override
   Widget build(BuildContext context) => Badge(
         isLabelVisible: badge > 0,
-        label: Text('$badge'),
-        offset: const Offset(8, -4),
+        smallSize: 8,
+        backgroundColor: AppColors.tertiary,
+        offset: const Offset(2, -2),
         child: Icon(icon, fill: filled ? 1 : 0),
       );
 }

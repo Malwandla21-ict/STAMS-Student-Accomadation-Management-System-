@@ -112,7 +112,7 @@ class _NudgeButtonState extends State<NudgeButton> {
             label: 'Nudge $name',
             icon: Symbols.notifications_active_rounded,
             filledIcon: true,
-            variant: BigButtonVariant.nudge,
+            variant: BigButtonVariant.soft,
             loading: _sending,
             onPressed: _nudge,
           ),

@@ -39,8 +39,8 @@ abstract interface class RoomRepository {
   Future<List<StudentSearchResult>> searchStudents(String email);
 }
 
-/// No backend endpoints yet - the ids say whose view to build. A real
-/// implementation can ignore them and rely on the JWT instead.
+/// The ids say whose data to use. The demo store needs them; the API versions ignore
+/// them because the backend reads the signed-in user from the token.
 abstract interface class IssueRepository {
   Future<List<Issue>> listForLandlord(int landlordId);
   Future<List<Issue>> listForStudent(int studentId);
@@ -170,5 +170,84 @@ class ApiRoomRepository implements RoomRepository {
   Future<List<StudentSearchResult>> searchStudents(String email) async {
     final json = await _api.get<List<dynamic>>('/api/students/search', query: {'email': email});
     return json.map((s) => StudentSearchResult.fromJson(s as Map<String, dynamic>)).toList();
+  }
+}
+
+class ApiIssueRepository implements IssueRepository {
+  ApiIssueRepository(this._api);
+
+  final ApiClient _api;
+
+  List<Issue> _list(List<dynamic> json) => json.map((i) => Issue.fromJson(i as Map<String, dynamic>)).toList();
+
+  // The backend works out whose issues to return from the token, so the ids are ignored.
+  @override
+  Future<List<Issue>> listForLandlord(int landlordId) async => _list(await _api.get<List<dynamic>>('/api/issues'));
+
+  @override
+  Future<List<Issue>> listForStudent(int studentId) async => _list(await _api.get<List<dynamic>>('/api/issues'));
+
+  @override
+  Future<List<Issue>> listForRoom(int roomId) async => _list(await _api.get<List<dynamic>>('/api/rooms/$roomId/issues'));
+
+  @override
+  Future<Issue> get(int id) async => Issue.fromJson(await _api.get<Map<String, dynamic>>('/api/issues/$id'));
+
+  @override
+  Future<Issue> create(NewIssue issue, {required int reporterId}) async {
+    final urls = <String>[];
+    for (final (i, bytes) in issue.photos.indexed) {
+      final json = await _api.upload<Map<String, dynamic>>('/api/uploads', bytes, filename: 'photo-${i + 1}.jpg');
+      urls.add(json['url'] as String);
+    }
+    final json = await _api.post<Map<String, dynamic>>('/api/issues', body: {
+      'roomId': issue.roomId,
+      'title': issue.title,
+      'description': issue.description,
+      'photoUrls': urls,
+    });
+    return Issue.fromJson(json);
+  }
+
+  @override
+  Future<Issue> update(int id, IssueUpdate update, {required int landlordId}) async =>
+      Issue.fromJson(await _api.patch<Map<String, dynamic>>('/api/issues/$id', body: {
+        'status': enumToJson(update.status),
+        'priority': enumToJson(update.priority),
+        if (update.note != null) 'note': update.note,
+      }));
+
+  @override
+  Future<Issue> nudge(int id, {required int studentId}) async =>
+      Issue.fromJson(await _api.post<Map<String, dynamic>>('/api/issues/$id/nudge'));
+}
+
+class ApiNotificationRepository implements NotificationRepository {
+  ApiNotificationRepository(this._api);
+
+  final ApiClient _api;
+
+  @override
+  Future<List<AppNotification>> list(int userId) async {
+    final json = await _api.get<List<dynamic>>('/api/notifications');
+    return json.map((n) => AppNotification.fromJson(n as Map<String, dynamic>)).toList();
+  }
+
+  @override
+  Future<void> markRead(int id) => _api.post<void>('/api/notifications/$id/read');
+
+  @override
+  Future<void> markAllRead(int userId) => _api.post<void>('/api/notifications/read-all');
+}
+
+class ApiStudentHomeRepository implements StudentHomeRepository {
+  ApiStudentHomeRepository(this._api);
+
+  final ApiClient _api;
+
+  @override
+  Future<StudentHome?> homeFor(int studentId) async {
+    final json = await _api.getOrNull<Map<String, dynamic>>('/api/me/room');
+    return json == null ? null : StudentHome.fromJson(json);
   }
 }

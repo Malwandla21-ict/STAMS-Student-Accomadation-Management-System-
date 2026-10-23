@@ -35,6 +35,9 @@ abstract final class AppColors {
   static const surfaceContainer = Color(0xFFEFEDE6); // nav bar, icon tiles
   static const surfaceHigh = Color(0xFFE9E7E0); // search fields
   static const surfaceHighest = Color(0xFFE3E1DA); // card borders, dividers
+  static const cardBorder = Color(0xFFECEAE4); // softer than surfaceHighest for cards
+  static const softTint = Color(0xFFEFF3F8); // calm tinted panels (student room card)
+  static const softIris = Color(0xFFF4F2FF); // very light iris for unread rows, highlights
 
   // Utility
   static const hoverBorder = Color(0xFFB9BFC5);

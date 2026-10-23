@@ -54,6 +54,9 @@ abstract final class Fmt {
   /// "22 Sep"
   static String dayMonth(DateTime t) => DateFormat('d MMM').format(t);
 
+  /// "Wednesday 30 September" - friendlier header date.
+  static String longToday() => DateFormat('EEEE d MMMM').format(DateTime.now());
+
   /// "Wed 30 Sep" header date.
   static String today() => DateFormat('EEE d MMM').format(DateTime.now());
 

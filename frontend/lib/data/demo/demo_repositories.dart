@@ -144,7 +144,7 @@ class DemoRoomRepository implements RoomRepository {
       throw const ApiException('Remove the students in this room before making it communal.', statusCode: 409);
     }
     if (capacity != null && occupied > capacity) {
-      throw ApiException('$occupied students live here - capacity can’t go below that.', statusCode: 409);
+      throw ApiException('$occupied students live here - capacity canât go below that.', statusCode: 409);
     }
     r.input = input;
     return _store.roomView(id);
@@ -168,20 +168,20 @@ class DemoRoomRepository implements RoomRepository {
     await _latency();
     final r = _mine(roomId);
     final room = _store.roomView(roomId);
-    if (room.isCommunal) throw const ApiException('Students can’t be assigned to a communal room.', statusCode: 400);
+    if (room.isCommunal) throw const ApiException('Students canât be assigned to a communal room.', statusCode: 400);
     if (room.isFull) throw const ApiException('This room is full.', statusCode: 409);
     final student = _store.users[studentId];
     if (student == null || student.role != Role.student) throw _notFound('Student');
     final current = student.roomId;
     if (current != null && _store.landlordOfRoom(current) != _me) {
-      throw const ApiException('This student lives in another landlord’s property.', statusCode: 409);
+      throw const ApiException('This student lives in another landlordâs property.', statusCode: 409);
     }
     student.roomId = roomId;
     final property = _store.properties[r.propertyId]!;
     _store.notify(studentId, (id) => AppNotification(
           id: id,
           type: NotificationType.roomAssigned,
-          message: 'You’ve been added to ${r.input.name} at ${property.input.name}',
+          message: 'Youâve been added to ${r.input.name} at ${property.input.name}',
           createdAt: DateTime.now(),
           actorName: _store.users[_me]!.name,
           roomName: r.input.name,
@@ -203,7 +203,7 @@ class DemoRoomRepository implements RoomRepository {
   Future<List<StudentSearchResult>> searchStudents(String email) async {
     await _latency();
     final q = email.trim().toLowerCase();
-    if (q.length < 2) return const [];
+    if (q.length < 3) return const [];
     return _store.users.values.where((u) => u.role == Role.student && u.email.contains(q)).map((u) {
       final roomId = u.roomId;
       if (roomId == null) {
@@ -296,6 +296,17 @@ class DemoIssueRepository implements IssueRepository {
       ],
     );
     _store.issues[id] = issue;
+    _store.notify(property.landlordId, (nid) => AppNotification(
+          id: nid,
+          type: NotificationType.newIssue,
+          message: '${reporter.name} reported “${issue.title}”',
+          createdAt: now,
+          actorName: reporter.name,
+          issueId: id,
+          issueTitle: issue.title,
+          roomName: issue.roomName,
+          propertyName: issue.propertyName,
+        ));
     return issue;
   }
 
@@ -361,7 +372,7 @@ class DemoIssueRepository implements IssueRepository {
     await _latency();
     final issue = _issue(id);
     final now = DateTime.now();
-    if (!issue.isOpen) throw const ApiException('Resolved issues can’t be nudged.', statusCode: 400);
+    if (!issue.isOpen) throw const ApiException('Resolved issues canât be nudged.', statusCode: 400);
     if (issue.reporterId != studentId) throw const ApiException('Only the student who reported this can nudge.', statusCode: 403);
     if (issue.nextNudgeAt(now) != null) {
       throw const ApiException('You can nudge once every 24 hours.', statusCode: 429);

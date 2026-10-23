@@ -200,7 +200,7 @@ class OutlinedCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final shape = RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(radius),
-      side: const BorderSide(color: AppColors.surfaceHighest),
+      side: const BorderSide(color: AppColors.cardBorder),
     );
     return Material(
       color: color,

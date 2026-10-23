@@ -9,6 +9,7 @@ import '../../providers/data.dart';
 import '../../theme/app_colors.dart';
 import '../../utils/format.dart';
 import '../../widgets/common.dart';
+import '../../widgets/celebration.dart';
 import '../../widgets/list_states.dart';
 import 'issues_screen.dart' show SearchField;
 
@@ -38,8 +39,14 @@ class _AssignStudentScreenState extends ConsumerState<AssignStudentScreen> {
     try {
       await ref.read(actionsProvider).assignStudent(room.id, s.id);
       if (!mounted) return;
+      final root = Navigator.of(context, rootNavigator: true);
       context.pop();
-      showMessage(context, '${s.name} added to ${room.name}');
+      celebrate(
+        root.context,
+        emoji: '🎉',
+        title: '${s.name.split(' ').first} is in!',
+        message: '${s.name} is now in ${room.name} and can report issues straight away. We’ve let them know.',
+      );
     } on ApiException catch (e) {
       if (mounted) showMessage(context, e.message);
     } finally {
@@ -80,7 +87,7 @@ class _AssignStudentScreenState extends ConsumerState<AssignStudentScreen> {
                 onChanged: (v) => setState(() => _query = v.trim().toLowerCase()),
               ),
               const SizedBox(height: 16),
-              if (_query.length < 2)
+              if (_query.length < 3)
                 const SizedBox.shrink()
               else if (results.isLoading && !results.hasValue)
                 const Padding(padding: EdgeInsets.all(24), child: Center(child: CircularProgressIndicator()))

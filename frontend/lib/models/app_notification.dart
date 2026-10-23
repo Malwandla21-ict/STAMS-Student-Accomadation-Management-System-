@@ -33,6 +33,21 @@ class AppNotification {
   /// 1 for the first nudge on the issue (nudges only).
   final int? nudgeNumber;
 
+  factory AppNotification.fromJson(Map<String, dynamic> json) => AppNotification(
+        id: (json['id'] as num).toInt(),
+        type: enumFromJson(NotificationType.values, json['type']),
+        message: json['message'] as String? ?? '',
+        createdAt: DateTime.parse(json['createdAt'] as String).toLocal(),
+        read: json['read'] as bool? ?? false,
+        actorName: json['actorName'] as String?,
+        issueId: (json['issueId'] as num?)?.toInt(),
+        issueTitle: json['issueTitle'] as String?,
+        roomName: json['roomName'] as String?,
+        propertyName: json['propertyName'] as String?,
+        status: json['status'] == null ? null : enumFromJson(IssueStatus.values, json['status']),
+        nudgeNumber: (json['nudgeNumber'] as num?)?.toInt(),
+      );
+
   AppNotification markRead() => AppNotification(
         id: id,
         type: type,

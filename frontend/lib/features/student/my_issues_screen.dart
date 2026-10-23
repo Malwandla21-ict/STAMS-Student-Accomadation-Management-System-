@@ -58,10 +58,10 @@ class MyIssuesScreen extends ConsumerWidget {
                       action: ref.watch(studentHomeProvider).value == null
                           ? null
                           : BigButton(
-                              label: 'Report an issue',
+                              label: 'Report something',
                               icon: Symbols.add_circle_rounded,
                               filledIcon: true,
-                              variant: BigButtonVariant.nudge,
+                              variant: BigButtonVariant.soft,
                               expand: false,
                               fontSize: 15,
                               onPressed: () {

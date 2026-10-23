@@ -8,8 +8,7 @@ import '../data/repositories.dart';
 import '../data/token_store.dart';
 import 'auth.dart';
 
-/// Backs everything in demo mode, and issues/alerts/student home in API mode
-/// until the backend has those endpoints.
+/// Backs every repository in demo mode (--dart-define=STAMS_DEMO=true).
 final demoStoreProvider = Provider<DemoStore>((ref) => DemoStore());
 
 final tokenStoreProvider = Provider<TokenStore>((ref) => kDemoMode ? MemoryTokenStore() : SecureTokenStore());
@@ -30,21 +29,20 @@ final propertyRepositoryProvider = Provider<PropertyRepository>((ref) =>
 final roomRepositoryProvider = Provider<RoomRepository>((ref) =>
     kDemoMode ? DemoRoomRepository(ref.watch(demoStoreProvider)) : ApiRoomRepository(ref.watch(apiClientProvider)));
 
-// No backend endpoints yet: always the demo implementations.
-final issueRepositoryProvider = Provider<IssueRepository>((ref) => DemoIssueRepository(ref.watch(demoStoreProvider)));
+final issueRepositoryProvider = Provider<IssueRepository>((ref) =>
+    kDemoMode ? DemoIssueRepository(ref.watch(demoStoreProvider)) : ApiIssueRepository(ref.watch(apiClientProvider)));
 
-final notificationRepositoryProvider =
-    Provider<NotificationRepository>((ref) => DemoNotificationRepository(ref.watch(demoStoreProvider)));
+final notificationRepositoryProvider = Provider<NotificationRepository>((ref) => kDemoMode
+    ? DemoNotificationRepository(ref.watch(demoStoreProvider))
+    : ApiNotificationRepository(ref.watch(apiClientProvider)));
 
-final studentHomeRepositoryProvider =
-    Provider<StudentHomeRepository>((ref) => DemoStudentHomeRepository(ref.watch(demoStoreProvider)));
+final studentHomeRepositoryProvider = Provider<StudentHomeRepository>((ref) => kDemoMode
+    ? DemoStudentHomeRepository(ref.watch(demoStoreProvider))
+    : ApiStudentHomeRepository(ref.watch(apiClientProvider)));
 
-/// Whose data the demo-backed repositories should show.
-/// Demo mode: the signed-in demo user. API mode: the seeded landlord (Tom) or
-/// student (Aisha), because real accounts don't exist in the demo store.
+/// The signed-in user's id. Lists depend on it so they refetch when the account changes.
 final actingUserIdProvider = Provider<int>((ref) {
   final user = ref.watch(currentUserProvider);
   if (user == null) throw StateError('No signed-in user');
-  if (kDemoMode) return user.id;
-  return user.isLandlord ? demoLandlordId : demoStudentId;
+  return user.id;
 });

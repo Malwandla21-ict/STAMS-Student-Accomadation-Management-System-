@@ -12,8 +12,8 @@ import '../../theme/app_colors.dart';
 import '../../theme/semantic_colors.dart';
 import '../../utils/format.dart';
 import '../../widgets/common.dart';
-import '../../widgets/issue_badges.dart';
 import '../../widgets/list_states.dart';
+import '../../widgets/progress.dart';
 
 /// A4 (landlord: nudges from students) / A5 (student: status changes).
 class AlertsScreen extends ConsumerStatefulWidget {
@@ -132,86 +132,87 @@ class _AlertRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final unread = !n.read;
     final actor = n.actorName ?? 'Someone';
+    final first = actor.split(' ').first;
     final shortTitle = (n.issueTitle ?? '').split(' — ').first;
+    final strong = TextStyle(fontWeight: unread ? FontWeight.w700 : FontWeight.w600);
+    final statusColors = context.statusColors;
 
-    final Widget icon;
-    final InlineSpan title;
-    final String subtitle;
-    Widget? footer;
-    Color? unreadBackground;
-    Color dot = AppColors.primary;
+    final (IconData icon, Color bg, Color fg, InlineSpan title, String subtitle, Widget? footer) = switch (n.type) {
+      NotificationType.newIssue => (
+          statusColors.reported.icon,
+          statusColors.reported.container,
+          statusColors.reported.onContainer,
+          TextSpan(children: [TextSpan(text: actor, style: strong), const TextSpan(text: ' reported something')]),
+          '$shortTitle · ${n.roomName}, ${n.propertyName}',
+          null,
+        ),
+      NotificationType.nudge => (
+          Symbols.notifications_active_rounded,
+          AppColors.tertiaryContainer,
+          AppColors.onTertiaryContainer,
+          TextSpan(children: [
+            TextSpan(text: actor, style: strong),
+            const TextSpan(text: ' nudged you'),
+            if ((n.nudgeNumber ?? 1) >= 2)
+              TextSpan(text: ' · ${Fmt.ordinal(n.nudgeNumber!)} time', style: const TextStyle(color: AppColors.nudgeText)),
+          ]),
+          '$shortTitle · ${n.roomName}, ${n.propertyName}',
+          null,
+        ),
+      NotificationType.statusChange => (
+          statusColors.of(n.status ?? IssueStatus.acknowledged).icon,
+          statusColors.of(n.status ?? IssueStatus.acknowledged).container,
+          statusColors.of(n.status ?? IssueStatus.acknowledged).onContainer,
+          TextSpan(children: [
+            TextSpan(text: first, style: strong),
+            TextSpan(
+              text: switch (n.status ?? IssueStatus.acknowledged) {
+                IssueStatus.acknowledged => ' has seen your issue',
+                IssueStatus.inProgress => ' is fixing your issue',
+                IssueStatus.resolved => ' fixed your issue 🎉',
+                IssueStatus.reported => ' reopened your issue',
+              },
+            ),
+          ]),
+          '$shortTitle · ${n.roomName}',
+          IssueProgress(status: n.status ?? IssueStatus.acknowledged, compact: true),
+        ),
+      NotificationType.roomAssigned => (
+          Symbols.bed_rounded,
+          AppColors.primaryContainer,
+          AppColors.onPrimaryContainer,
+          TextSpan(children: [TextSpan(text: first, style: strong), TextSpan(text: ' added you to ${n.roomName ?? 'a room'} 🏠')]),
+          n.propertyName ?? '',
+          null,
+        ),
+    };
 
-    switch (n.type) {
-      case NotificationType.nudge:
-        icon = unread
-            ? const IconCircle(Symbols.notifications_active_rounded, background: AppColors.tertiary, foreground: Colors.white)
-            : const IconCircle(Symbols.notifications_active_rounded,
-                background: AppColors.tertiaryContainer, foreground: AppColors.onTertiaryContainer, filled: false);
-        final nth = (n.nudgeNumber ?? 1) >= 2 ? ' · ${Fmt.ordinal(n.nudgeNumber!)} nudge' : '';
-        title = TextSpan(children: [
-          TextSpan(text: actor, style: TextStyle(fontWeight: unread ? FontWeight.w700 : FontWeight.w600)),
-          const TextSpan(text: ' nudged you'),
-          if (nth.isNotEmpty)
-            TextSpan(text: nth, style: TextStyle(fontWeight: unread ? FontWeight.w700 : FontWeight.w600, color: AppColors.nudgeText)),
-        ]);
-        subtitle = '$shortTitle · ${n.roomName}, ${n.propertyName}';
-        unreadBackground = AppColors.unreadNudge;
-        dot = AppColors.tertiary;
-      case NotificationType.statusChange:
-        final status = n.status ?? IssueStatus.acknowledged;
-        final s = context.statusColors.of(status);
-        icon = IconCircle(s.icon, background: s.container, foreground: s.onContainer);
-        final verb = switch (status) {
-          IssueStatus.acknowledged => 'acknowledged your issue',
-          IssueStatus.inProgress => 'started work on your issue',
-          IssueStatus.resolved => 'marked an issue resolved',
-          IssueStatus.reported => 'reopened your issue',
-        };
-        title = TextSpan(children: [
-          TextSpan(text: actor.split(' ').first, style: TextStyle(fontWeight: unread ? FontWeight.w700 : FontWeight.w600)),
-          TextSpan(text: ' $verb'),
-        ]);
-        subtitle = '$shortTitle · ${n.roomName}';
-        footer = StatusChip(status);
-        unreadBackground = AppColors.unreadStatus;
-      case NotificationType.roomAssigned:
-        icon = const IconCircle(Symbols.bed_rounded, background: AppColors.primaryContainer, foreground: AppColors.onPrimaryContainer);
-        title = TextSpan(children: [
-          TextSpan(text: actor.split(' ').first, style: TextStyle(fontWeight: unread ? FontWeight.w700 : FontWeight.w600)),
-          TextSpan(text: ' added you to ${n.roomName}'),
-        ]);
-        subtitle = n.propertyName ?? '';
-        unreadBackground = AppColors.unreadStatus;
-    }
-
-    final time = Text(Fmt.ago(n.createdAt), style: const TextStyle(fontSize: 12, color: AppColors.onSurfaceVariant));
+    final small = Theme.of(context).textTheme.bodySmall!.copyWith(color: AppColors.onSurfaceVariant);
     return Material(
-      color: unread ? unreadBackground : Colors.transparent,
+      color: unread ? AppColors.softIris : Colors.transparent,
       child: InkWell(
         onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
           child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            icon,
+            IconCircle(icon, background: bg, foreground: fg, filled: unread),
             const SizedBox(width: 14),
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text.rich(title, style: const TextStyle(fontSize: 15, height: 20 / 15, color: AppColors.onSurface)),
                 const SizedBox(height: 3),
-                Text(subtitle,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 13, height: 18 / 13, color: AppColors.onSurfaceVariant)),
-                SizedBox(height: footer == null ? 3 : 6),
-                if (footer != null) Row(children: [footer, const SizedBox(width: 8), time]) else time,
+                Text(subtitle, maxLines: 2, overflow: TextOverflow.ellipsis, style: small.copyWith(fontSize: 13, height: 18 / 13)),
+                if (footer != null) ...[const SizedBox(height: 8), SizedBox(width: 180, child: footer)],
+                const SizedBox(height: 4),
+                Text(Fmt.ago(n.createdAt), style: small),
               ]),
             ),
             if (unread)
               Container(
-                width: 10,
-                height: 10,
-                margin: const EdgeInsets.only(top: 6, left: 8),
-                decoration: BoxDecoration(color: dot, shape: BoxShape.circle),
+                width: 8,
+                height: 8,
+                margin: const EdgeInsets.only(top: 7, left: 8),
+                decoration: const BoxDecoration(color: AppColors.tertiary, shape: BoxShape.circle),
               ),
           ]),
         ),
