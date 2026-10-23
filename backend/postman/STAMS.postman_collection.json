@@ -1,0 +1,542 @@
+{
+  "info": {
+    "name": "STAMS API",
+    "description": "Requests for the STAMS backend. Run them top to bottom: the scripts save the token and the ids of what you create into collection variables, so later requests use them automatically.\n\nIf a register request returns 409 (already exists), just run 'Login - landlord'.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8081"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "propertyId",
+      "value": ""
+    },
+    {
+      "key": "roomId",
+      "value": ""
+    },
+    {
+      "key": "studentId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register - landlord",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Tom Hadley\",\n  \"email\": \"tom.hadley@example.com\",\n  \"password\": \"password123\",\n  \"role\": \"LANDLORD\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code < 300) { pm.collectionVariables.set('token', pm.response.json().token); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Register - student",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Aisha Bello\",\n  \"email\": \"aisha.bello@example.com\",\n  \"password\": \"password123\",\n  \"role\": \"STUDENT\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "Creates a student to assign to a room later. Saves only the student's id - you stay signed in as the landlord."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code < 300) { pm.collectionVariables.set('studentId', pm.response.json().user.id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login - landlord",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"tom.hadley@example.com\",\n  \"password\": \"password123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code < 300) { pm.collectionVariables.set('token', pm.response.json().token); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Me",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "me"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Properties",
+      "item": [
+        {
+          "name": "List my properties",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/properties",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "properties"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create property",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/properties",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "properties"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Parkview Student Residence\",\n  \"addressLine1\": \"14 Parkview Road\",\n  \"addressLine2\": \"Hatfield\",\n  \"city\": \"Pretoria\",\n  \"postalCode\": \"0083\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code < 300) { pm.collectionVariables.set('propertyId', pm.response.json().id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get property (with rooms)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/properties/{{propertyId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "properties",
+                "{{propertyId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update property",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/properties/{{propertyId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "properties",
+                "{{propertyId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Parkview Residence\",\n  \"addressLine1\": \"14 Parkview Road\",\n  \"addressLine2\": \"Hatfield\",\n  \"city\": \"Pretoria\",\n  \"postalCode\": \"0083\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Delete property",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/properties/{{propertyId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "properties",
+                "{{propertyId}}"
+              ]
+            },
+            "description": "Refused (409) while students live there or issues are open."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Rooms",
+      "item": [
+        {
+          "name": "Create shared bedroom",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/properties/{{propertyId}}/rooms",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "properties",
+                "{{propertyId}}",
+                "rooms"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Room 2\",\n  \"type\": \"BEDROOM\",\n  \"occupancyMode\": \"SHARED\",\n  \"capacity\": 2\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code < 300) { pm.collectionVariables.set('roomId', pm.response.json().id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create communal kitchen",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/properties/{{propertyId}}/rooms",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "properties",
+                "{{propertyId}}",
+                "rooms"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Kitchen\",\n  \"type\": \"KITCHEN\",\n  \"occupancyMode\": \"COMMUNAL\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "List rooms in property",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/properties/{{propertyId}}/rooms",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "properties",
+                "{{propertyId}}",
+                "rooms"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get room",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/rooms/{{roomId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "rooms",
+                "{{roomId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update room",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/rooms/{{roomId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "rooms",
+                "{{roomId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Room 2\",\n  \"type\": \"BEDROOM\",\n  \"occupancyMode\": \"SHARED\",\n  \"capacity\": 3\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Delete room",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/rooms/{{roomId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "rooms",
+                "{{roomId}}"
+              ]
+            },
+            "description": "Refused (409) while students live there or issues are open."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Students",
+      "item": [
+        {
+          "name": "Search students by email",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/students/search?email=aisha",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "students",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "email",
+                  "value": "aisha"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Assign student to room",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/rooms/{{roomId}}/students",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "rooms",
+                "{{roomId}}",
+                "students"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentId\": {{studentId}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Remove student from room",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/rooms/{{roomId}}/students/{{studentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "rooms",
+                "{{roomId}}",
+                "students",
+                "{{studentId}}"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
