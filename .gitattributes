@@ -14,3 +14,9 @@ mvnw     text eol=lf
 *.jpeg binary
 *.ico  binary
 *.jar  binary
+
+# Flutter's generated platform runners: leave them out of GitHub's language bar
+frontend/windows/** linguist-generated
+frontend/linux/** linguist-generated
+frontend/macos/** linguist-generated
+frontend/ios/** linguist-generated
